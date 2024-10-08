@@ -1,0 +1,152 @@
+```{r}
+library(tidyverse)
+install.packages("tidyverse")
+```
+
+```{r}
+problems(data) %>% print()
+```
+
+```{r}
+data <- data %>% rename(name=AnimalName, gender=AnimalGender, birth_year=AnimalBirthYear, breed=BreedName, zip_code=ZipCode, issue_date=LicenseIssuedDate, expiration_date=LicenseExpiredDate)
+data_cc <- data %>% filter(complete.cases(.))
+```
+
+```{r}
+library(dplyr)
+print(data)
+```
+
+```{r}
+original_count <- nrow(data)
+cat(sprintf("Original row count: %d\n", original_count))
+```
+Original row count: 616890
+
+```{r}
+data_complete <- data %>% filter(complete.cases(.))
+new_count <- nrow(data_complete)
+cat(sprintf("Row count after removing incomplete cases: %d\n", new_count))
+```
+Row count after removing incomplete cases: 615549
+
+2. 
+```{r}
+initial_row_count <- nrow(data)
+cat("Initial row count:", initial_row_count, "\n")
+```
+
+```{r}
+nrow(data %>% distinct())
+```
+
+```{r}
+data_cc %>% group_by_all() %>% tally() %>% filter(n!=1)
+data_cc %>% group_by_all() %>% tally() %>% filter(n!=1) %>% arrange(desc(n))
+```
+
+```{r}
+non_distinct_rows <- data %>% filter(duplicated(.) | duplicated(., fromLast = TRUE))
+print(non_distinct_rows)
+```
+
+```{r}
+data_dedup <- data_cc  %>% distinct() %>% filter(name!=".")
+```
+
+3.
+
+```{r}
+ggplot(data_cc, aes(birth_year)) + geom_histogram(stat="count")
+```
+
+```{r}
+ggplot(data_cc, aes(birth_year)) + geom_histogram(stat="count") + xlim(1980, 2024)
+```
+
+```{r}
+ggplot(data_cc, aes(birth_year)) + geom_histogram(stat="count") + xlim(2000, 2020)
+```
+
+4. 
+```{r}
+initial_row_count <- nrow(data)
+cat("Initial row count:", initial_row_count, "\n")
+```
+
+```{r}
+data_dedup %>% group_by(name, gender, birth_year, breed, zip_code) %>% tally()
+```
+```{r}
+unique_dogs_count <- data_dedup %>% group_by(name, gender, birth_year, breed, zip_code) %>% tally() %>% arrange(desc(n))
+```
+
+```{r}
+initial_row_count <- nrow(data_dedup)
+cat("Initial row count:", initial_row_count, "\n")
+```
+
+```{r}
+final_row_count <- nrow(unique_dogs_count)
+cat("Final row count after deduplication:", final_row_count, "\n")
+```
+In this case, we want to filter out duplicate lines/data to make sure that we are not makeing overestimations once we start making calculations of the data. This could lead us to make incorrect assumptions about the data and inform inaccurate conclusions, such as on the years in which the most dogs became registered, the most popular dog names, zip codes with highest registration rates, etc. 
+
+5. 
+```{r}
+n_per_year <- data_dedup %>% group_by(birth_year) %>% tally ()
+```
+
+```{r}
+n_per_name_per_year <- data_dedup %>% group_by(birth_year, name) %>% tally()
+```
+
+```{r}
+n_per_name_per_year %>% inner_join(n_per_year, by="birth_year", suffix=c("_named", "_per_year")) %>% mutate(rate=n_named/n_per_year) %>% filter(birth_year==1999) %>% arrange(desc(rate))
+```
+
+```{r}
+n_per_name_per_year %>% inner_join(n_per_year, by="birth_year", suffix=c("_named", "_per_year")) %>% mutate(rate=n_named/n_per_year) %>% filter(birth_year==2023) %>% arrange(desc(rate))
+```
+
+```{r}
+name_rates_per_year <- n_per_name_per_year %>% inner_join(n_per_year, by="birth_year", suffix=c("_named", "_per_year")) %>% mutate(rate=n_named/n_per_year)
+```
+
+```{r}
+ggplot (name_rates_per_year %>% filter(name=="BUDDY"), aes(birth_year, rate)) + geom_line()
+```
+
+```{r}
+ggplot (name_rates_per_year %>% filter(name=="LUNA"), aes(birth_year, rate)) + geom_line()
+```
+
+```{r}
+filtered_data <- name_rates_per_year %>%
+  filter(name %in% c("LUNA", "BUDDY"))
+```
+
+```{r}
+ggplot(filtered_data, aes(x = birth_year, y = rate, color = name)) +
+  geom_line() +
+  labs(title = "Rates of Dog Names Over Time",
+       x = "Year",
+       y = "Rate") +
+  theme_minimal()
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+  ```
