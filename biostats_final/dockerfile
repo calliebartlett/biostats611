@@ -1,0 +1,21 @@
+FROM rocker/verse 
+
+# Install required R packages
+RUN R -e "install.packages(c('tidyverse', 'readr', 'ggplot2', 'rmarkdown', 'tidyr'), dependencies = TRUE)"
+RUN apt update && apt install -y man-db
+RUN R -e "install.packages(\"tinytex\")"
+RUN R -e "tinytex::install_tinytex(force = TRUE)"
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Establish working directory 
+WORKDIR /biostats611/biostats_final
+
+# Copy all project files into the container
+COPY . /biostats611/biostats_final
+
+# Set the default command to render the report
+CMD ["make", "all"]

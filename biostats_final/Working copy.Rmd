@@ -1,0 +1,236 @@
+---
+title: "Final Project"
+output: html_document
+date: "2024-11-24"
+---
+
+```{r}
+library(tidyverse)
+install.packages("tidyverse")
+```
+
+```{r}
+install.packages("readr")
+```
+
+```{r}
+if (!require("dplyr")) install.packages("dplyr", dependencies = TRUE)
+library(dplyr)
+if (!require("ggplot2")) install.packages("ggplot2", dependencies = TRUE)
+library(ggplot2)
+```
+
+```{r}
+data <- read.csv ("2019.csv")
+```
+
+```{r}
+#Remove rows with missing values
+clean_data <- data %>%
+    filter(complete.cases(.))
+```
+
+```{r}
+# Ensure the derived_data directory exists
+if (!dir.exists("derived_data")) dir.create("derived_data")
+
+write.csv(clean_data, "derived_data/2019clean_data.csv", row.names = FALSE)
+```
+# This is a clean dataset that removes rows with missing values 
+
+
+#Visualize Happiness Scores by Country
+```{r}
+library(ggplot2)
+```
+
+```{r}
+clean_data <- read.csv("derived_data/2019clean_data.csv")
+```
+
+```{r}
+# Create the bar plot
+p <- ggplot(clean_data, aes(x = reorder(Country.or.region, Score), y = Score)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Happiness Score by Country",
+    x = "Country",
+    y = "Happiness Score"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# Checks to see if the data directory exists and creates it if it doesn't exist
+if (!dir.exists("figures")) {
+  dir.create("figures")
+}
+```
+
+```{r}
+ggsave("figures/happiness_score_by_country.png", p)
+```
+#This graph depicts what the happiness score for each country is, by ranking countries by their happy scores in order from highest score to lowest score. Finland has the highest score out of all other countries and South Sudan has the lowest score. 
+
+Economy x Happiness
+```{r}
+# Create the scatter plot
+p <- ggplot(clean_data, aes(x = GDP.per.capita, y = Score)) +
+  geom_point(color = "blue", size = 3) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(
+    title = "Economy vs. Happiness Score",
+    x = "Economy (GDP per Capita)",
+    y = "Happiness Score"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# Save the plot
+ggsave("figures/economy_vs_happiness.png", p)
+```
+#Economy and happiness are directly correlated. As shown by the graph, as country's happiness scores increase, their GDP per capita also subsequently increases. 
+
+
+#Correlation Heatmap of variables 
+```{r}
+library(ggplot2)
+library(tidyr) 
+```
+
+```{r}
+# Read the dataset
+clean_data <- read.csv("derived_data/2019clean_data.csv")
+```
+
+```{r}
+# Select numeric columns for correlation
+numeric_cols <- clean_data[, c("Score", "GDP.per.capita", "Social.support", "Healthy.life.expectancy", "Freedom.to.make.life.choices", "Perceptions.of.corruption")]
+```
+
+```{r}
+# Calculate correlation matrix
+corr_matrix <- cor(numeric_cols, use = "complete.obs")
+```
+
+```{r}
+# Melt the matrix for ggplot
+melted_corr <- as.data.frame(as.table(corr_matrix))
+```
+
+```{r}
+# Create the heatmap with smaller font size for y-axis labels
+p <- ggplot(melted_corr, aes(x = Var1, y = Var2, fill = Freq)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  labs(
+    title = "Correlation Heatmap of Happiness Variables",
+    x = "",
+    y = "",
+    fill = "Correlation"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+    axis.text.y = element_text(angle = 45, hjust = 1)   # Rotate y-axis labels for symmetry
+  )
+```
+
+```{r}
+# Save the plot
+ggsave("figures/correlation_heatmap.png", p)
+```
+#The heatmap is visually depicting pairwise correlations between the different variables in the dataset. By using colors to show the strength and direction of correlation, the graph depicts what variables have a positive correlation, negative correlation, and no correlation. Positive correlations are shown by the strength of the color red to demonstrate that as the score for one variable increases, the other variable score also tends to increase. While negative correlation is shown by the color blue to indicate that as one variable score increases, the other decreases, there are no variables in the dataset that have a negative correlation with each other. Darker blue or red indicates a stronger correlation between variables. The color white indicates that there is no correlation between two variables.
+#Some interesting insights from this correlation map include the positive correlation between GDP and happiness score along with GDP and healthy life expectancy. I am particularly surprised that the happiness score was not associated with freedom to make life choices. I thought that greater autonomy would definitely increase ones happiness score since people have greater control over life decisions. 
+
+#Happiness scores by country
+```{r}
+library(ggplot2)
+
+# Read the dataset
+clean_data <- read.csv("derived_data/2019clean_data.csv")
+
+# Create the line plot
+p <- ggplot(clean_data, aes(x = Overall.rank, y = Score)) +
+  geom_line(color = "blue") +
+  labs(
+    title = "Happiness Score Distribution by Rank",
+    x = "Rank",
+    y = "Happiness Score"
+  ) +
+  theme_minimal()
+
+# Save the plot
+ggsave("figures/happiness_distribution.png", p)
+```
+#This graph depicts the distribution of happiness scores by rank of country. Among the first 25 countries with the highest scores, each subsequent score drops pretty significantly with each country that follows. Between the countries that rank between 25 to 125, the scores don't drop as drastically with each country that follows. However, around 125, the distribution of scores begins to drop pretty significantly again. It seems that there is more of a difference in scores between the first 25 countries and then between 125 and 157 countries. 
+
+#Influence of Social Support on Happiness 
+```{r}
+# Ensure Overall.rank exists and clean it
+if ("Overall.rank" %in% colnames(data)) {
+  data$Overall.rank <- as.character(data$Overall.rank) # Ensure character type
+  data$Overall.rank[!grepl("^\\d+$", data$Overall.rank)] <- NA # Replace non-numeric with NA
+  data$Overall.rank <- as.numeric(data$Overall.rank) # Convert to numeric
+} else {
+  stop("The 'Overall.rank' column does not exist in the dataset.")
+}
+```
+
+```{r}
+# Verify the range after cleaning
+if (all(is.na(data$Overall.rank))) {
+  stop("The 'Overall.rank' column contains no valid numeric values.")
+} else {
+  print(range(data$Overall.rank, na.rm = TRUE)) # Check the range of Overall.rank
+}
+```
+
+```{r}
+# Remove rows with NA in Overall.rank
+data <- data[!is.na(data$Overall.rank), ]
+```
+
+```{r}
+# Create rank groups
+data$Rank.Group <- cut(
+  data$Overall.rank,
+  breaks = c(0, 50, 100, 150),
+  labels = c("Top 50", "51-100", "101+"),
+  include.lowest = TRUE
+)
+```
+```{r}
+# Check group distribution
+print(table(data$Rank.Group, useNA = "ifany"))
+```
+
+```{r}
+# Verify and clean Social.support column
+if ("Social.support" %in% colnames(data)) {
+  data$Social.support <- as.numeric(as.character(data$Social.support)) # Convert to numeric
+} else {
+  stop("The 'Social.support' column does not exist in the dataset.")
+}
+```
+
+```{r}
+# Create the boxplot
+library(ggplot2)
+p <- ggplot(data, aes(x = Rank.Group, y = Social.support)) +
+    geom_boxplot(fill = "lightgreen") +
+    labs(
+        title = "Social Support Association with Happiness Rank",
+        x = "Happiness Rank Group",
+        y = "Social Support"
+    ) +
+    theme_minimal()
+```
+
+```{r}
+# Save the plot
+ggsave("figures/social_support_boxplot.png", p)
+```
+#The boxplot is demonstrating the variability of social support scores within each rank group set. There are three rank groups, one for the first top 50 scores, 51-100 scores, and then 101+ scores. Higher ranked countries, in the top 50 set, have higher median social support scores. There is also an NA group for countries that have reported that scores are not available. The first set of countries have lower variability in their social support scores and there are no outliers. Furthermore, the median is higher than any of the other sets of ranks. The 51-100 rank is second highest and there is slightly more variability in scores, with a few outliers. The third set, 101+, has the greatest variability in scores but there are no outliers. As depicted with the graph, there is an association between increased social support and increased happiness scores.  
